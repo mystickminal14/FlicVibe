@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "51965941877",
+    "project_id": "flickmovies-fee9f",
+    "storage_bucket": "flickmovies-fee9f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:51965941877:android:10546634601161c180003c",
+        "android_client_info": {
+          "package_name": "com.example.flick"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1Rq85AJ7wC_q0mhi-Qlxf1l4ZeU36dOA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
