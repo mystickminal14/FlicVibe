@@ -1,4 +1,5 @@
 import 'package:flick/database/auth.dart';
+import 'package:flick/pages/forget_pw.dart';
 import 'package:flutter/material.dart';
 import 'package:flick/pages/register_screen.dart';
 
@@ -184,6 +185,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 30),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ForgetPassword(),
+                  ),
+                );
+              },child: const Text('Forget Password')),
                 GestureDetector(
                   onTap: () {
                     Navigator.push(

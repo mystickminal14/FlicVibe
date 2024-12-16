@@ -3,6 +3,7 @@
 
 import 'package:flick/pages/customer/PremiumPlan.dart';
 import 'package:flick/pages/customer/SelectPlan.dart';
+import 'package:flick/pages/forget_pw.dart';
 import 'package:flick/pages/homepage.dart';
 import 'package:flick/pages/login_page.dart';
 import 'package:flick/pages/navigation/admin_nav.dart';
@@ -46,6 +47,7 @@ class MyApp extends StatelessWidget {
               '/checkout': (context) => const CheckoutPage(),
 
 
+              '/forget': (context) => const ForgetPassword(),
 
 
             }

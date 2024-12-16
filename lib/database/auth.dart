@@ -89,6 +89,14 @@ class AuthService {
       throw Exception("Failed to fetch movie data: $e");
     }
   }
+Future passwordReset(BuildContext context,email) async {
+  try {
+    await _auth.sendPasswordResetEmail(email: email.trim());
+    _showSnackBar(context, "Email Verification sent successful", Colors.green);
+  } catch (e) {
+    _showSnackBar(context, "Email Dont exist", Colors.red);
+  }
+}
   Future<UserModel?> userLogIn(
       BuildContext context, String email, String password) async {
     try {
