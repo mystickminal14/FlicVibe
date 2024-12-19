@@ -1,25 +1,27 @@
 import 'dart:convert';
+import 'dart:typed_data';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flick/custom_widgets/custom_btn.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../database/auth.dart';
+import 'package:flick/database/auth.dart';
+import 'package:provider/provider.dart';
 
-class DisplayMovie extends StatefulWidget {
+import '../../database/Order.dart';
+import '../../database/order_db.dart';
+import '../../database/user.dart';
+
+class ViewMovies extends StatefulWidget {
   final String movieId;
-  const DisplayMovie({super.key, required this.movieId});
+  const ViewMovies({super.key, required this.movieId});
 
   @override
-  State<DisplayMovie> createState() => _DisplayMovieState();
+  State<ViewMovies> createState() => _ViewMoviesState();
 }
 
-class _DisplayMovieState extends State<DisplayMovie> {
-  bool isLoading = true;
+class _ViewMoviesState extends State<ViewMovies> {
+  bool isLoading = false;
   Map<String, dynamic>? movieData;
-  YoutubePlayerController? _youtubeController;
-  bool _isFullScreen = false;
-  bool _isControlsVisible = true;
+  Uint8List? imageBytes;
 
   @override
   void initState() {
@@ -32,27 +34,22 @@ class _DisplayMovieState extends State<DisplayMovie> {
       final data = await AuthService().getMovieById(widget.movieId);
 
       if (data.isNotEmpty) {
+        final base64Image = data[0]['movies']['poster'] ?? '';
+        if (base64Image.isNotEmpty) {
+          try {
+            imageBytes = base64Decode(base64Image);
+          } catch (e) {
+            print("Error decoding Base64: $e");
+          }
+        }
+
         setState(() {
           movieData = data[0]['movies'];
           isLoading = false;
-
-          // Initialize the YoutubePlayerController after fetching the data
-          final videoId = YoutubePlayer.convertUrlToId(movieData?['link']);
-          _youtubeController = YoutubePlayerController(
-            initialVideoId: videoId ?? "",
-            flags: const YoutubePlayerFlags(
-              autoPlay: false,
-              mute: false,
-              controlsVisibleAtStart: true,
-            ),
-          );
         });
       }
     } catch (e) {
       print("Error fetching movie details: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to load movie details")),
-      );
       setState(() {
         isLoading = false;
       });
@@ -60,76 +57,8 @@ class _DisplayMovieState extends State<DisplayMovie> {
   }
 
   @override
-  void dispose() {
-    _youtubeController?.dispose();
-    if (_isFullScreen) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    }
-    super.dispose();
-  }
-
-  void _toggleFullScreen() {
-    setState(() {
-      _isFullScreen = !_isFullScreen;
-    });
-    if (_isFullScreen) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-      SystemChrome.setPreferredOrientations([
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-      ]);
-    } else {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    }
-  }
-
-  Widget _buildYouTubePlayer() {
-    if (_youtubeController == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    return YoutubePlayerBuilder(
-      player: YoutubePlayer(
-        controller: _youtubeController!,
-        showVideoProgressIndicator: true,
-        progressIndicatorColor: Colors.blueAccent,
-      ),
-      builder: (context, player) {
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              _isControlsVisible = !_isControlsVisible;
-            });
-          },
-          child: Stack(
-            alignment: Alignment.bottomRight,
-            children: [
-              SizedBox(
-                height: 300,
-                child: player,
-              ),
-              Positioned(
-                bottom: 10,
-                right: 10,
-                child: IconButton(
-                  icon: Icon(
-                    _isFullScreen ? Icons.fullscreen_exit : Icons.fullscreen,
-                    color: Colors.white,
-                  ),
-                  onPressed: _toggleFullScreen,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return isLoading==true? const Center(child: CircularProgressIndicator(),): Scaffold(
       appBar: AppBar(
         title: const Text('Movie Details'),
         centerTitle: true,
@@ -144,38 +73,67 @@ class _DisplayMovieState extends State<DisplayMovie> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Movie Poster
               Center(
-                child: SizedBox(
+                child: Container(
                   width: double.infinity,
                   height: 300,
-                  child: _buildYouTubePlayer(),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    image: DecorationImage(
+                      image: imageBytes != null
+                          ? MemoryImage(imageBytes!)
+                          : const AssetImage('assets/placeholder.png')
+                      as ImageProvider,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    movieData?['movie'] ?? 'Unknown Movie',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () async {
-                      final url = movieData?['link'];
-                      if (url != null && await canLaunch(url)) {
-                        await launch(url);
-                      } else {
-                        Navigator.pushNamed(context, '/login');
-                      }
-                    },
-                    icon: const Icon(Icons.youtube_searched_for),
-                  ),
-                ],
-              ),
+
+              // Movie Title
+           Row(
+             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+             children: [
+               Text(
+                 movieData?['movie'] ?? 'Unknown Movie',
+                 style: const TextStyle(
+                   fontSize: 24,
+                   fontWeight: FontWeight.bold,
+                 ),
+               ),
+               CustomButton(text: 'Buy', onPressed: ()async {
+    try {
+      setState(() {
+        isLoading=true;
+      });
+    final user = Provider.of<UserModel?>(context, listen: false);
+    final id =  movieData?['id'];
+    final uid =  user?.uid;
+    final movie =  movieData?['movie'];
+    final price =   movieData?['price'];
+    final createdBy =  movieData?['createdBy'];
+    final image = movieData?['poster'];
+await MyOrderController().addOrder(context: context, movieId: id, custId: uid??'', movie: movie, price: price, poster: image, status: 'ordered', createdBy: createdBy);
+      setState(() {
+        isLoading=false;
+      });
+    Navigator.pushReplacementNamed(context, '/payment');
+    } catch (e) {
+    print("Error adding to cart: $e");
+
+    ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Failed to add to cart')),
+    );
+    }
+    })
+             ],
+           ),
+
               const SizedBox(height: 10),
+
+              // Movie Rating and Duration
               Row(
                 children: [
                   Row(
@@ -183,8 +141,7 @@ class _DisplayMovieState extends State<DisplayMovie> {
                       const Icon(Icons.star, color: Colors.yellow),
                       const SizedBox(width: 5),
                       Text(
-                        movieData?['rating']?.toStringAsFixed(1) ??
-                            'N/A',
+                        movieData?['rating']?.toStringAsFixed(1) ?? 'N/A',
                         style: const TextStyle(fontSize: 16),
                       ),
                     ],
@@ -196,22 +153,28 @@ class _DisplayMovieState extends State<DisplayMovie> {
                   ),
                 ],
               ),
+
               const SizedBox(height: 10),
+
+              // Movie Genres
               Wrap(
                 spacing: 8,
-                children: [
-                  Chip(
-                    label: Text(
-                      movieData?['category'] ?? 'Unknown',
-                      style: const TextStyle(
-                        fontSize: 14,
-                      ),
+                children: (movieData?['genres'] as List<dynamic>? ?? [])
+                    .map((genre) => Chip(
+                  label: Text(
+                    genre,
+                    style: const TextStyle(
+                      fontSize: 14,
                     ),
-                    backgroundColor: Colors.grey[200],
                   ),
-                ],
+                  backgroundColor: Colors.grey[200],
+                ))
+                    .toList(),
               ),
+
               const SizedBox(height: 20),
+
+              // Movie Summary
               const Text(
                 'Summary',
                 style: TextStyle(

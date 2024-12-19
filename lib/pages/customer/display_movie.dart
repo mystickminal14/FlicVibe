@@ -17,7 +17,7 @@ class DisplayMovie extends StatefulWidget {
 class _DisplayMovieState extends State<DisplayMovie> {
   bool isLoading = true;
   Map<String, dynamic>? movieData;
-  late YoutubePlayerController _youtubeController;
+  YoutubePlayerController? _youtubeController;
   bool _isFullScreen = false;
   bool _isControlsVisible = true;
 
@@ -25,15 +25,6 @@ class _DisplayMovieState extends State<DisplayMovie> {
   void initState() {
     super.initState();
     fetchMovieDetails();
-    final videoId = YoutubePlayer.convertUrlToId(movieData?['link']);
-    _youtubeController = YoutubePlayerController(
-      initialVideoId: videoId ?? "",
-      flags: const YoutubePlayerFlags(
-        autoPlay: false,
-        mute: false,
-        controlsVisibleAtStart: true,
-      ),
-    );
   }
 
   Future<void> fetchMovieDetails() async {
@@ -44,6 +35,17 @@ class _DisplayMovieState extends State<DisplayMovie> {
         setState(() {
           movieData = data[0]['movies'];
           isLoading = false;
+
+          // Initialize the YoutubePlayerController after fetching the data
+          final videoId = YoutubePlayer.convertUrlToId(movieData?['link']);
+          _youtubeController = YoutubePlayerController(
+            initialVideoId: videoId ?? "",
+            flags: const YoutubePlayerFlags(
+              autoPlay: false,
+              mute: false,
+              controlsVisibleAtStart: true,
+            ),
+          );
         });
       }
     } catch (e) {
@@ -59,7 +61,7 @@ class _DisplayMovieState extends State<DisplayMovie> {
 
   @override
   void dispose() {
-    _youtubeController.dispose();
+    _youtubeController?.dispose();
     if (_isFullScreen) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
       SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
@@ -84,9 +86,12 @@ class _DisplayMovieState extends State<DisplayMovie> {
   }
 
   Widget _buildYouTubePlayer() {
+    if (_youtubeController == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
     return YoutubePlayerBuilder(
       player: YoutubePlayer(
-        controller: _youtubeController,
+        controller: _youtubeController!,
         showVideoProgressIndicator: true,
         progressIndicatorColor: Colors.blueAccent,
       ),
@@ -178,7 +183,8 @@ class _DisplayMovieState extends State<DisplayMovie> {
                       const Icon(Icons.star, color: Colors.yellow),
                       const SizedBox(width: 5),
                       Text(
-                        movieData?['rating']?.toStringAsFixed(1) ?? 'N/A',
+                        movieData?['rating']?.toStringAsFixed(1) ??
+                            'N/A',
                         style: const TextStyle(fontSize: 16),
                       ),
                     ],
@@ -225,4 +231,3 @@ class _DisplayMovieState extends State<DisplayMovie> {
     );
   }
 }
-
