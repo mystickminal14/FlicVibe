@@ -25,7 +25,7 @@ class _DisplayMovieState extends State<DisplayMovie> {
   void initState() {
     super.initState();
     fetchMovieDetails();
-    final videoId = YoutubePlayer.convertUrlToId("https://youtu.be/pKctjlxbFDQ?si=15G5MVClONSJgXqy");
+    final videoId = YoutubePlayer.convertUrlToId(movieData?['link']);
     _youtubeController = YoutubePlayerController(
       initialVideoId: videoId ?? "",
       flags: const YoutubePlayerFlags(
