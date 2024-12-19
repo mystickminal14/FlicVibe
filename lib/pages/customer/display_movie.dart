@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
-
+import 'package:url_launcher/url_launcher.dart';
 import '../../database/auth.dart';
 
 class DisplayMovie extends StatefulWidget {
   final String movieId;
-  const DisplayMovie({Key? key, required this.movieId}) : super(key: key);
+  const DisplayMovie({super.key, required this.movieId});
 
   @override
   State<DisplayMovie> createState() => _DisplayMovieState();
@@ -25,6 +25,15 @@ class _DisplayMovieState extends State<DisplayMovie> {
   void initState() {
     super.initState();
     fetchMovieDetails();
+    final videoId = YoutubePlayer.convertUrlToId("https://youtu.be/pKctjlxbFDQ?si=15G5MVClONSJgXqy");
+    _youtubeController = YoutubePlayerController(
+      initialVideoId: videoId ?? "",
+      flags: const YoutubePlayerFlags(
+        autoPlay: false,
+        mute: false,
+        controlsVisibleAtStart: true,
+      ),
+    );
   }
 
   Future<void> fetchMovieDetails() async {
@@ -39,6 +48,9 @@ class _DisplayMovieState extends State<DisplayMovie> {
       }
     } catch (e) {
       print("Error fetching movie details: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to load movie details")),
+      );
       setState(() {
         isLoading = false;
       });
@@ -72,19 +84,6 @@ class _DisplayMovieState extends State<DisplayMovie> {
   }
 
   Widget _buildYouTubePlayer() {
-    // Replace this link with your YouTube URL
-    String videoUrl = "https://youtu.be/pKctjlxbFDQ?si=15G5MVClONSJgXqy";
-    final videoId = YoutubePlayer.convertUrlToId(videoUrl);
-
-    _youtubeController = YoutubePlayerController(
-      initialVideoId: videoId!,
-      flags: const YoutubePlayerFlags(
-        autoPlay: false,
-        mute: false,
-        controlsVisibleAtStart: true,
-      ),
-    );
-
     return YoutubePlayerBuilder(
       player: YoutubePlayer(
         controller: _youtubeController,
@@ -99,13 +98,14 @@ class _DisplayMovieState extends State<DisplayMovie> {
             });
           },
           child: Stack(
+            alignment: Alignment.bottomRight,
             children: [
-              Container(
+              SizedBox(
                 height: 300,
                 child: player,
               ),
               Positioned(
-                top: 10,
+                bottom: 10,
                 right: 10,
                 child: IconButton(
                   icon: Icon(
@@ -140,7 +140,7 @@ class _DisplayMovieState extends State<DisplayMovie> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
-                child: Container(
+                child: SizedBox(
                   width: double.infinity,
                   height: 300,
                   child: _buildYouTubePlayer(),
@@ -156,6 +156,17 @@ class _DisplayMovieState extends State<DisplayMovie> {
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  IconButton(
+                    onPressed: () async {
+                      final url = movieData?['link'];
+                      if (url != null && await canLaunch(url)) {
+                        await launch(url);
+                      } else {
+                        Navigator.pushNamed(context, '/login');
+                      }
+                    },
+                    icon: const Icon(Icons.youtube_searched_for),
                   ),
                 ],
               ),
@@ -214,3 +225,4 @@ class _DisplayMovieState extends State<DisplayMovie> {
     );
   }
 }
+

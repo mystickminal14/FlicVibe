@@ -152,6 +152,7 @@ Future passwordReset(BuildContext context,email) async {
     String img,
     String vid,
     String movie,
+      String link,
     String desc,
     String? createdBy,
     String category,
@@ -161,7 +162,7 @@ Future passwordReset(BuildContext context,email) async {
       MovieDatabaseService movieService =
           MovieDatabaseService(createdBy: createdBy!);
       await movieService.addMoviesData(
-          img: img, vid: vid, movie: movie, desc: desc, category: category, price: price);
+          img: img, vid: vid, movie: movie, desc: desc, category: category, price: price, link: link);
 
       _showSnackBar(context, "Movie uoloaded succesfully", Colors.green);
     } catch (e) {

@@ -13,6 +13,7 @@ class MovieDatabaseService {
     required String vid,
     required String movie,
     required String desc,    required String price,
+    required String link,
     required String category,
 
   }) async {
@@ -22,6 +23,7 @@ class MovieDatabaseService {
         'poster': img,
         'vid': vid,
         'desc': desc,
+        'link':link,
         'price': price,
         'movie': movie,
         'category':category
@@ -34,42 +36,4 @@ class MovieDatabaseService {
     }
   }
 
-  Future<void> updateMoviesData({
-    required String createdBy,
-    required String img,
-    required String MovieName,
-    required String brandName,
-    required String life,
-    required String volume,
-    required String category,
-    required String type,
-    required String origin,
-    required String price,
-    required String stock,
-    required String desc,
-    required Map<String, dynamic> reviews,
-  }) async {
-    try {
-      await MovieCollection.doc(createdBy).set({
-        'createdBy': createdBy,
-        'MovieName': MovieName,
-        'brandName': brandName,
-        'life': life,
-        'volume': volume,
-        'img': img,
-        'category': category,
-        'type': type,
-        'origin': origin,
-        'price': price,
-        'stock': stock,
-        'desc': desc,
-        'reviews': reviews,
-      }, SetOptions(merge: true));
-
-      print("Movie updated successfully in Firestore.");
-    } catch (e) {
-      print("Error updating Movie data: $e");
-      rethrow;
-    }
-  }
 }

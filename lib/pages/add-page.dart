@@ -24,6 +24,7 @@ class _AddMovieState extends State<AddMovie> {
   String movieName = '',
       description = '',
       category = '',
+  link='',
       _base64Poster = '',
       _videoPath = '',
       error = '',
@@ -209,7 +210,9 @@ class _AddMovieState extends State<AddMovie> {
               _buildPosterUpload(),
               const SizedBox(height: 20),
               _buildVideoUpload(),
+              const SizedBox(height: 20),textField("Enter movie link", (value) => link = value),
               const SizedBox(height: 20),
+
               textField("Enter movie title", (value) => movieName = value),
               const SizedBox(height: 20),
               textField("Enter movie price", (value) => price = value),
@@ -239,6 +242,7 @@ class _AddMovieState extends State<AddMovie> {
                         _base64Poster,
                         _videoPath,
                         movieName,
+                        link,
                         description,
                         user!.uid,
                         selectedCategory!,price
